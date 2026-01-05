@@ -29,9 +29,12 @@ export function TosAcceptanceModal({ open, onOpenChange, onAccepted }: TosAccept
 
   const acceptTosMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/user/accept-tos", "POST");
+      const response = await apiRequest("/api/user/accept-tos", "POST");
+      console.log("TOS acceptance response:", response);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("TOS accepted successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       toast({
         title: "Terms Accepted",
@@ -40,10 +43,11 @@ export function TosAcceptanceModal({ open, onOpenChange, onAccepted }: TosAccept
       onAccepted?.();
       onOpenChange(false);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("TOS acceptance error:", error);
       toast({
-        title: "Error",
-        description: "Failed to record acceptance. Please try again.",
+        title: "Failed to Record Acceptance",
+        description: "Please try again or contact support if the problem persists.",
         variant: "destructive",
       });
     },
@@ -58,6 +62,8 @@ export function TosAcceptanceModal({ open, onOpenChange, onAccepted }: TosAccept
       });
       return;
     }
+    acceptTosMutation.mutate();
+  };
     acceptTosMutation.mutate();
   };
 

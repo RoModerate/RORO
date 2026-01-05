@@ -524,20 +524,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Accept TOS
   app.post("/api/user/accept-tos", async (req, res) => {
-    const token = req.cookies.session;
-    const user = await getUserFromSession(token);
-    
-    if (!user) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
     try {
+      const token = req.cookies.session;
+      if (!token) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const user = await getUserFromSession(token);
+      
+      if (!user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
       const updatedUser = await storage.acceptTos(user.id);
+      if (!updatedUser) {
+        return res.status(500).json({ error: "Failed to update user" });
+      }
+
       const { accessToken, refreshToken, ...safeUser } = updatedUser;
-      res.json(safeUser);
+      return res.json(safeUser);
     } catch (error) {
       console.error("Error accepting TOS:", error);
-      res.status(500).json({ error: "Failed to accept TOS" });
+      return res.status(500).json({ error: "Failed to accept TOS", details: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
