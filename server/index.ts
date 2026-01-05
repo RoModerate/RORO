@@ -111,6 +111,9 @@ async function seedAdminUser() {
         console.error('[Discord Bot] Warning: Failed to auto-start user bots:', err.message);
       });
     }, 2000); // Wait 2 seconds for database to be ready
+  }).catch(err => {
+    console.error('[Discord Bot] Warning: Failed to load bot manager:', err.message);
+    console.error('[Discord Bot] Server will continue running, but Discord features may not work.');
   });
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -118,7 +121,8 @@ async function seedAdminUser() {
     const message = err.message || "Internal Server Error";
 
     res.status(status).json({ message });
-    throw err;
+    // Don't throw - just log the error to prevent crash
+    console.error('[Error Handler]', message);
   });
 
   // importantly only setup vite in development and after
