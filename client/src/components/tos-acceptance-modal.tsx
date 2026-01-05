@@ -64,8 +64,6 @@ export function TosAcceptanceModal({ open, onOpenChange, onAccepted }: TosAccept
     }
     acceptTosMutation.mutate();
   };
-    acceptTosMutation.mutate();
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
