@@ -21,7 +21,7 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    host: '0.0.0.0',
+    host: 'localhost',
     port: 5000,
     strictPort: false,
     hmr: {
