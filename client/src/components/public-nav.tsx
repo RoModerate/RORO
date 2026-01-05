@@ -30,7 +30,7 @@ export function PublicNav() {
                 <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full group-hover:bg-primary/30 transition-all" />
                 <img 
                   src={romoderateIcon} 
-                  alt="RoModerate" 
+                  alt="RoMarketplace" 
                   className="h-9 w-9 object-contain relative transition-transform duration-500 group-hover:scale-110"
                 />
               </div>

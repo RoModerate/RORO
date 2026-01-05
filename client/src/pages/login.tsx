@@ -79,7 +79,7 @@ export default function Login() {
                 </div>
                 <h1 className="text-4xl md:text-5xl font-bold mb-4">Sign In</h1>
                 <p className="text-lg text-muted-foreground">
-                  Continue with Discord to access your dashboard
+                  Continue with Discord to access RoMarketplace
                 </p>
               </div>
 

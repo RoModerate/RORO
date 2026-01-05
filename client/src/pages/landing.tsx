@@ -70,17 +70,17 @@ export default function Landing() {
               <div className="flex items-center justify-center mb-8">
                 <img 
                   src={romoderateIcon} 
-                  alt="RoModerate" 
+                  alt="RoMarketplace" 
                   className="h-32 w-32 object-contain"
                 />
               </div>
               
               <div className="space-y-6">
                 <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground">
-                  Welcome to RoModerate
+                  Welcome to RoMarketplace
                 </h1>
                 <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-                  Get your Discord server bots online and running smoothly! Professional moderation tools for Roblox games.
+                  Coming Soon - Secure Roblox Item Marketplace. The safest way to buy and sell UGC, plugins, and more.
                 </p>
               </div>
 
@@ -89,20 +89,20 @@ export default function Landing() {
                   <>
                     <Button 
                       size="lg" 
-                      onClick={() => setLocation('/dashboard')}
-                      data-testid="button-get-started"
+                      onClick={() => setLocation('/marketplace')}
+                      data-testid="button-marketplace"
                     >
-                      Go to Dashboard
+                      Explore Marketplace
                     </Button>
                     <Button 
                       size="lg" 
                       variant="outline"
-                      onClick={() => setLocation('/moderation')}
-                      data-testid="button-moderate"
+                      onClick={() => setLocation('/dashboard')}
+                      data-testid="button-dashboard"
                       className="gap-2"
                     >
                       <UserCog className="h-5 w-5" />
-                      Moderator Quick Access
+                      Dashboard
                     </Button>
                   </>
                 ) : (
@@ -110,17 +110,9 @@ export default function Landing() {
                     <Button 
                       size="lg" 
                       onClick={() => window.location.href = "/api/auth/discord"}
-                      data-testid="button-get-started"
+                      data-testid="button-login"
                     >
-                      Sign In with Discord
-                    </Button>
-                    <Button 
-                      size="lg" 
-                      variant="outline"
-                      onClick={() => setLocation('/marketplace')}
-                      data-testid="button-learn-more"
-                    >
-                      Browse Marketplace
+                      Log In
                     </Button>
                   </>
                 )}
@@ -171,32 +163,7 @@ export default function Landing() {
             </div>
           </div>
 
-          <section id="features" className="container mx-auto px-6 py-20">
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center mb-16">
-                <h2 className="text-4xl font-bold mb-4">Powerful Features</h2>
-                <p className="text-xl text-muted-foreground">
-                  Everything you need to moderate your Roblox community
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {features.map((feature, i) => (
-                  <Card key={i} className="hover-elevate transition-all">
-                    <CardHeader>
-                      <div className="h-12 w-12 rounded-lg bg-secondary flex items-center justify-center mb-4">
-                        <feature.icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <CardTitle className="text-xl">{feature.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-muted-foreground">{feature.description}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </section>
+
 
           <section id="marketplace" className="container mx-auto px-6 py-20">
             <div className="max-w-6xl mx-auto">
