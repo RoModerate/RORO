@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const { data: admin, isLoading, error } = useQuery({
+  const { data: admin, isLoading, error } = useQuery<{ id: string; username: string; role: string }>({
     queryKey: ["/api/admin/me"],
     retry: false,
   });
@@ -43,7 +43,7 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await apiRequest("POST", "/api/admin/logout", {});
+      await apiRequest("/api/admin/logout", "POST");
       toast({ title: "Logged Out", description: "You have been logged out successfully" });
       setLocation("/admin-panel");
     } catch (error) {
