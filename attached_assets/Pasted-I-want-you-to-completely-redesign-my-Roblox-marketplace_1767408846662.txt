@@ -1,0 +1,73 @@
+I want you to completely redesign my Roblox marketplace, RoMarket, to be modern, polished, and visually appealing, while keeping it part of the RoModerate ecosystem. Make it feel high-end, smooth, and professional, not generic or AI-looking.
+
+Here’s what I need:
+
+Branding & Logo:
+
+Integrate the RoModerate logo in the top-left, visible on every page.
+
+Use consistent colors, fonts, and style that matches RoModerate’s dashboard.
+
+Marketplace Homepage:
+
+Clean and modern layout for browsing items (cards/grid style).
+
+Include seller’s Discord avatar next to their item listings instead of the default gray icon.
+
+Display item categories, price, seller reputation, and a “Verified Seller” badge clearly.
+
+Include filters for category, price range, trending, newest, etc. in a nice, interactive UI.
+
+Add hover effects on items for quick actions like “Buy” or “View Details.”
+
+Create Listing Page:
+
+Modern form layout with clear sections (Basic Info, Tags, Price, Media Upload).
+
+Add Discord avatar preview for seller at the top.
+
+Use interactive and aesthetic input fields, dropdowns, and buttons.
+
+Include a “preview listing” button so users see how it will look before publishing.
+
+Navigation & UX:
+
+Redesign header to include: Marketplace, Dashboard, Profile, Sell Item.
+
+Keep a sticky navigation bar with clear hierarchy.
+
+Make all buttons, links, and interactive elements consistent and stylish.
+
+Admin/Hidden Panels:
+
+Ensure admin panel works properly and is accessible via the dashboard.
+
+Include tools to manage listings, users, disputes, and reports.
+
+Add a clear design for admin panels that matches the marketplace style.
+
+Consider hidden features for moderation or content approval that are easy to access visually.
+
+Overall Look & Feel:
+
+Modern, smooth gradients or subtle shadows to make the UI pop.
+
+Rounded corners on cards and buttons.
+
+Responsive design for mobile and desktop.
+
+Smooth animations and hover effects for interactive feedback.
+
+Keep it intuitive for users and admins.
+
+Extra Features:
+
+Highlight trending or verified items.
+
+Include real-time stats like active listings, verified sellers, safe/escrow badge.
+
+Add search bar with autocomplete suggestions.
+
+Ensure everything feels like part of the RoModerate ecosystem, not a separate app.
+
+Deliverable: A fully redesigned RoMarket marketplace UI and admin panel, ready for web integration, with clear modern style, Discord avatars integrated, and consistent branding.

@@ -49,7 +49,6 @@ import MarketplaceSeller from "@/pages/marketplace-seller";
 import Changelog from "@/pages/changelog";
 import AdminLogin from "@/pages/admin-login";
 import AdminDashboard from "@/pages/admin-dashboard";
-import AdminMarketplace from "@/pages/admin-marketplace";
 import type { User, Server as ServerType } from "@shared/schema";
 import { Loader2 } from "lucide-react";
 import { connectWebSocket, disconnectWebSocket } from "./lib/websocket";
@@ -240,7 +239,6 @@ function Router() {
       {/* Admin routes - hidden from public navigation */}
       <Route path="/admin-panel" component={AdminLogin} />
       <Route path="/admin-panel/dashboard" component={AdminDashboard} />
-      <Route path="/admin-panel/marketplace" component={AdminMarketplace} />
       
       <Route component={NotFound} />
     </Switch>

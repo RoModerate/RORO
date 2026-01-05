@@ -8,31 +8,7 @@ import * as schema from "@shared/schema";
 // Configure Neon to use WebSocket for connections
 neonConfig.webSocketConstructor = ws;
 
-// Prioritize Replit PostgreSQL secrets over .env file
-function getDatabaseUrl(): string | undefined {
-  const { PGHOST, PGUSER, PGPASSWORD, PGDATABASE, PGPORT, DATABASE_URL } = process.env;
-  
-  // If we have all the Replit PG secrets, construct a fresh DATABASE_URL
-  // This ensures we use Replit's provisioned database even if .env has stale credentials
-  // The key indicator is that PGUSER should match what we're using in the URL
-  if (PGHOST && PGUSER && PGPASSWORD && PGDATABASE) {
-    // Check if DATABASE_URL has different credentials than PGUSER
-    // If so, prefer the PG* secrets as they're the Replit-provisioned ones
-    const currentDbUrl = DATABASE_URL || '';
-    const urlHasDifferentUser = !currentDbUrl.includes(`${PGUSER}:`);
-    
-    if (urlHasDifferentUser || !DATABASE_URL) {
-      const port = PGPORT || '5432';
-      console.log('[Database] Using Replit PostgreSQL credentials (PGHOST, PGUSER, etc.)');
-      return `postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${port}/${PGDATABASE}`;
-    }
-  }
-  
-  // Fall back to DATABASE_URL from environment
-  return DATABASE_URL;
-}
-
-const DATABASE_URL = getDatabaseUrl();
+const DATABASE_URL = process.env.DATABASE_URL;
 
 let poolInstance: Pool | null = null;
 let dbInstance: ReturnType<typeof drizzle> | null = null;

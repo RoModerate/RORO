@@ -1,30 +1,29 @@
 import { config } from "dotenv";
 import { resolve } from "path";
 
-// Database keys that should come from Replit Secrets
-const databaseKeys = ['PGHOST', 'PGPORT', 'PGUSER', 'PGPASSWORD', 'PGDATABASE'];
+// Preserve non-empty Replit Secrets and remove empty ones
+const replitSecrets: Record<string, string> = {};
+const secretKeys = ['DATABASE_URL', 'ENCRYPTION_KEY', 'PGHOST', 'PGPORT', 'PGUSER', 'PGPASSWORD', 'PGDATABASE'];
 
-// Store database-related Replit Secrets BEFORE loading .env
-const replitDbSecrets: Record<string, string> = {};
-
-console.log('[ENV] Checking for Replit database secrets...');
-databaseKeys.forEach(key => {
+console.log('[ENV] Checking for Replit Secrets...');
+secretKeys.forEach(key => {
   const value = process.env[key];
+  console.log(`[ENV] ${key}: ${value ? `exists (${value.substring(0, 20)}...)` : 'not found'}`);
   if (value !== undefined && value !== '') {
-    replitDbSecrets[key] = value;
+    replitSecrets[key] = value;
+  } else if (value === '') {
+    // Remove empty environment variables so .env can populate them
+    delete process.env[key];
   }
 });
 
-// Check if we have all the PG* secrets to construct a DATABASE_URL
-const hasPgSecrets = ['PGHOST', 'PGUSER', 'PGPASSWORD', 'PGDATABASE'].every(
-  key => replitDbSecrets[key]
-);
-
-if (hasPgSecrets) {
-  console.log('[ENV] Found complete Replit PostgreSQL secrets, constructing DATABASE_URL');
+if (Object.keys(replitSecrets).length > 0) {
+  console.log(`[ENV] Preserved ${Object.keys(replitSecrets).length} Replit Secrets:`, Object.keys(replitSecrets).join(', '));
+} else {
+  console.log('[ENV] No Replit Secrets found in process.env');
 }
 
-// Load .env file to get non-database config values
+// Load .env file (override: true to allow .env to populate empty Replit Secrets)
 const result = config({ 
   path: resolve(process.cwd(), '.env'),
   override: true 
@@ -36,24 +35,13 @@ if (result.error) {
   console.log('[ENV] Loaded .env file successfully');
 }
 
-// AFTER loading .env, restore Replit database secrets (they take precedence over .env)
-Object.entries(replitDbSecrets).forEach(([key, value]) => {
+// Restore Replit Secrets (they take precedence over .env)
+Object.entries(replitSecrets).forEach(([key, value]) => {
   process.env[key] = value;
 });
 
-// If we have all PG* secrets, construct and use Replit's DATABASE_URL
-if (hasPgSecrets) {
-  const pgPort = replitDbSecrets['PGPORT'] || '5432';
-  process.env.DATABASE_URL = `postgresql://${replitDbSecrets['PGUSER']}:${replitDbSecrets['PGPASSWORD']}@${replitDbSecrets['PGHOST']}:${pgPort}/${replitDbSecrets['PGDATABASE']}`;
-  console.log('[ENV] Using Replit PostgreSQL database');
-}
-
-console.log(`[ENV] Database URL configured: ${process.env.DATABASE_URL ? 'yes' : 'no'}`);
-if (process.env.DATABASE_URL) {
-  const isNeon = process.env.DATABASE_URL.includes('neon.tech');
-  const isReplit = process.env.DATABASE_URL.includes('replit') || 
-                   process.env.DATABASE_URL.includes('neon.tech') === false;
-  console.log(`[ENV] Database: ${isNeon ? 'Neon (external)' : 'Replit PostgreSQL'}`);
+if (Object.keys(replitSecrets).length > 0) {
+  console.log(`[ENV] Restored ${Object.keys(replitSecrets).length} Replit Secrets`);
 }
 
 // Verify critical environment variables

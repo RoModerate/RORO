@@ -1,28 +1,11 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Search, 
   ShoppingCart, 
@@ -30,40 +13,23 @@ import {
   Sparkles, 
   Grid3X3,
   Store,
+  Filter,
   SlidersHorizontal,
   ChevronDown,
-  LogIn,
-  Plus,
-  Heart,
-  MessageCircle,
   User,
-  Settings,
-  LogOut,
+  LogIn,
+  CheckCircle2,
   Package,
-  ShieldCheck,
-  Flag,
-  Trash2,
-  MoreVertical,
-  Bot
+  ArrowRight
 } from "lucide-react";
 import type { MarketplaceListing, User as UserType } from "../../../shared/schema";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { PublicNav } from "@/components/public-nav";
 
 export default function MarketplacePublic() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [priceRange, setPriceRange] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("trending");
-  const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [reportTarget, setReportTarget] = useState<{ type: 'listing' | 'seller'; id: string; name: string } | null>(null);
-  const [reportReason, setReportReason] = useState("");
-  const [aiChatOpen, setAiChatOpen] = useState(false);
-  const [aiMessage, setAiMessage] = useState("");
-  const [aiConversation, setAiConversation] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
-  const [aiLoading, setAiLoading] = useState(false);
 
   const { data: user } = useQuery<UserType>({
     queryKey: ["/api/auth/me"],
@@ -74,91 +40,13 @@ export default function MarketplacePublic() {
     queryKey: ["/api/marketplace/listings"],
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (listingId: string) => {
-      return apiRequest("DELETE", `/api/marketplace/listings/${listingId}`);
-    },
-    onSuccess: () => {
-      toast({ title: "Listing deleted", description: "Your listing has been removed." });
-      queryClient.invalidateQueries({ queryKey: ["/api/marketplace/listings"] });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to delete listing.", variant: "destructive" });
-    },
-  });
-
-  const reportMutation = useMutation({
-    mutationFn: async (data: { type: string; targetId: string; reason: string }) => {
-      return apiRequest("POST", "/api/marketplace/reports", data);
-    },
-    onSuccess: () => {
-      toast({ title: "Report submitted", description: "Thank you for helping keep our marketplace safe." });
-      setReportDialogOpen(false);
-      setReportReason("");
-      setReportTarget(null);
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to submit report.", variant: "destructive" });
-    },
-  });
-
-  const handleReport = (type: 'listing' | 'seller', id: string, name: string) => {
-    if (!user) {
-      toast({ title: "Login required", description: "Please sign in to report content.", variant: "destructive" });
-      return;
-    }
-    setReportTarget({ type, id, name });
-    setReportDialogOpen(true);
-  };
-
-  const submitReport = () => {
-    if (!reportTarget || !reportReason.trim()) return;
-    reportMutation.mutate({
-      type: reportTarget.type,
-      targetId: reportTarget.id,
-      reason: reportReason,
-    });
-  };
-
-  const handleAiChat = async () => {
-    if (!aiMessage.trim() || aiLoading) return;
-    
-    if (!user) {
-      toast({ 
-        title: "Sign in required", 
-        description: "Please sign in with Discord to use the AI assistant.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const userMessage = aiMessage.trim();
-    setAiConversation(prev => [...prev, { role: 'user', content: userMessage }]);
-    setAiMessage("");
-    setAiLoading(true);
-
-    try {
-      const response = await apiRequest("POST", "/api/ai/chat", { message: userMessage });
-      const data = await response.json();
-      if (data.error === "Rate limit exceeded") {
-        setAiConversation(prev => [...prev, { role: 'assistant', content: data.response || "You're sending messages too quickly. Please wait a moment." }]);
-      } else {
-        setAiConversation(prev => [...prev, { role: 'assistant', content: data.response }]);
-      }
-    } catch (error) {
-      setAiConversation(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having trouble responding right now. Please try again." }]);
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
   const categories = [
-    { value: "all", label: "All Items", count: listings.length },
-    { value: "ugc", label: "UGC Items", count: listings.filter(l => l.category === "ugc").length },
-    { value: "game-passes", label: "Game Passes", count: listings.filter(l => l.category === "game-passes").length },
-    { value: "plugins", label: "Plugins & Tools", count: listings.filter(l => l.category === "plugins").length },
-    { value: "models", label: "3D Models", count: listings.filter(l => l.category === "models").length },
-    { value: "audio", label: "Audio", count: listings.filter(l => l.category === "audio").length },
+    { value: "all", label: "All Items" },
+    { value: "ugc", label: "UGC Items" },
+    { value: "game-passes", label: "Game Passes" },
+    { value: "plugins", label: "Plugins" },
+    { value: "models", label: "Models" },
+    { value: "audio", label: "Audio" },
   ];
 
   const filteredListings = listings
@@ -172,618 +60,276 @@ export default function MarketplacePublic() {
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case "price-low":
-          return a.price - b.price;
-        case "price-high":
-          return b.price - a.price;
-        case "newest":
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case "trending":
-        default:
-          return b.viewCount - a.viewCount;
+        case "price-low": return a.price - b.price;
+        case "price-high": return b.price - a.price;
+        case "newest": return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        default: return b.viewCount - a.viewCount;
       }
     });
 
-  const userAvatar = user?.avatar 
-    ? `https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png`
-    : undefined;
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background">
-      {/* Professional Header like Facebook Marketplace */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo & Brand */}
-            <div className="flex items-center gap-6">
-              <button 
-                onClick={() => setLocation("/marketplace")}
-                className="flex items-center gap-2 font-bold text-xl hover-elevate px-3 py-2 rounded-md"
-                data-testid="button-home"
-              >
-                <Store className="h-6 w-6 text-primary" />
-                <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                  RoMarket
-                </span>
-              </button>
-              
-              {/* Category Navigation */}
-              <nav className="hidden lg:flex items-center gap-1">
-                {categories.slice(0, 5).map((cat) => (
-                  <button
-                    key={cat.value}
-                    onClick={() => setSelectedCategory(cat.value)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all hover-elevate ${
-                      selectedCategory === cat.value
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                    data-testid={`button-category-${cat.value}`}
-                  >
-                    {cat.label}
-                    {cat.count > 0 && (
-                      <Badge variant="secondary" className="ml-2 text-xs">
-                        {cat.count}
-                      </Badge>
-                    )}
-                  </button>
-                ))}
-              </nav>
-            </div>
+    <div className="min-h-screen bg-background selection:bg-primary/30">
+      <PublicNav />
 
-            {/* Right side actions */}
-            <div className="flex items-center gap-3">
-              {/* AI Assistant Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setAiChatOpen(true)}
-                className="gap-2 hidden sm:flex"
-                data-testid="button-ai-assistant"
-              >
-                <Bot className="h-4 w-4" />
-                AI Help
-              </Button>
+      {/* Hero Section */}
+      <section className="relative py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/10 -z-10" />
+        <div className="container mx-auto px-4 text-center space-y-8 relative">
+          <Badge variant="outline" className="px-4 py-1.5 border-primary/20 bg-primary/5 text-primary-foreground/80 rounded-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <Sparkles className="h-3.5 w-3.5 mr-2 text-primary" />
+            The Premier Roblox Asset Marketplace
+          </Badge>
+          
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight animate-in fade-in slide-in-from-bottom-6 duration-1000">
+            Elevate Your <span className="text-primary italic">Creation</span>
+          </h1>
+          
+          <p className="max-w-2xl mx-auto text-lg text-muted-foreground animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            Discover high-end, verified assets for your next big project. 
+            Professional grade scripts, models, and assets at your fingertips.
+          </p>
 
-              {user ? (
-                <>
-                  {/* Sell Button */}
-                  <Button
-                    onClick={() => setLocation("/marketplace/create")}
-                    size="sm"
-                    className="gap-2"
-                    data-testid="button-create-listing"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Sell Item
-                  </Button>
-
-                  {/* User Menu */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0" data-testid="button-user-menu">
-                        <Avatar className="h-10 w-10 border-2 border-primary/20">
-                          <AvatarImage src={userAvatar} alt={user.username} />
-                          <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                            {user.username.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end" forceMount>
-                      <DropdownMenuLabel className="font-normal">
-                        <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">{user.username}</p>
-                          <p className="text-xs leading-none text-muted-foreground">
-                            {user.email || "Discord User"}
-                          </p>
-                        </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setLocation(`/marketplace/seller/${user.id}`)} data-testid="menu-my-profile">
-                        <User className="mr-2 h-4 w-4" />
-                        My Profile
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setLocation("/marketplace/my-listings")} data-testid="menu-my-listings">
-                        <Package className="mr-2 h-4 w-4" />
-                        My Listings
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setLocation("/marketplace/favorites")} data-testid="menu-favorites">
-                        <Heart className="mr-2 h-4 w-4" />
-                        Favorites
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setLocation("/marketplace/messages")} data-testid="menu-messages">
-                        <MessageCircle className="mr-2 h-4 w-4" />
-                        Messages
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setLocation("/settings")} data-testid="menu-settings">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Settings
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        onClick={() => window.location.href = '/api/auth/logout'}
-                        className="text-destructive focus:text-destructive"
-                        data-testid="menu-logout"
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Logout
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </>
-              ) : (
-                <Button
-                  onClick={() => window.location.href = "/api/auth/discord?returnTo=/marketplace"}
-                  size="sm"
-                  className="gap-2"
-                  data-testid="button-login"
-                >
-                  <LogIn className="h-4 w-4" />
-                  Sign In with Discord
-                </Button>
-              )}
-            </div>
+          <div className="max-w-2xl mx-auto relative group animate-in fade-in slide-in-from-bottom-10 duration-1000">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Input
+              placeholder="Search assets, creators, or tags..."
+              className="w-full h-16 pl-14 pr-6 rounded-2xl bg-card/50 backdrop-blur-md border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all text-lg shadow-2xl"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              data-testid="input-search"
+            />
           </div>
-        </div>
-      </header>
 
-      {/* Hero Search Section */}
-      <section className="border-b bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5">
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-3xl mx-auto text-center space-y-6">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                Discover Amazing Roblox Items
-              </span>
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              The largest marketplace for Roblox creators. Buy, sell, and trade with confidence.
-            </p>
-            
-            {/* Search Bar */}
-            <div className="relative max-w-2xl mx-auto">
-              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search for items, creators, or game passes..."
-                className="pl-12 pr-4 h-14 text-lg bg-background/80 backdrop-blur-sm border-2 focus:border-primary"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                data-testid="input-search"
-              />
+          <div className="flex items-center justify-center gap-12 pt-8 animate-in fade-in duration-1000">
+            <div className="space-y-1">
+              <div className="text-3xl font-bold">{listings.length}</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">Listings</div>
             </div>
-
-            {/* Quick Stats */}
-            <div className="flex items-center justify-center gap-8 pt-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{listings.length}</div>
-                <div className="text-sm text-muted-foreground">Active Listings</div>
+            <div className="w-px h-12 bg-border/50" />
+            <div className="space-y-1">
+              <div className="text-3xl font-bold">100%</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">Secure</div>
+            </div>
+            <div className="w-px h-12 bg-border/50" />
+            <div className="space-y-1">
+              <div className="text-3xl font-bold flex items-center justify-center gap-2">
+                <CheckCircle2 className="h-6 w-6 text-primary" />
+                Verified
               </div>
-              <div className="w-px h-10 bg-border" />
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">1.2K+</div>
-                <div className="text-sm text-muted-foreground">Verified Sellers</div>
-              </div>
-              <div className="w-px h-10 bg-border" />
-              <div className="text-center">
-                <div className="flex items-center gap-1 text-2xl font-bold text-green-500">
-                  <ShieldCheck className="h-5 w-5" />
-                  Safe
-                </div>
-                <div className="text-sm text-muted-foreground">Escrow Protected</div>
-              </div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">Sellers</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Filters & Sort Bar */}
-      <section className="border-b bg-card/50 sticky top-16 z-40">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
-              {/* Mobile Category Pills */}
-              <div className="flex lg:hidden items-center gap-2">
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-12">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar Filters */}
+          <aside className="lg:w-64 space-y-8 flex-shrink-0">
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground px-2">Categories</h3>
+              <div className="space-y-1">
                 {categories.map((cat) => (
                   <Button
                     key={cat.value}
-                    variant={selectedCategory === cat.value ? "default" : "outline"}
-                    size="sm"
+                    variant={selectedCategory === cat.value ? "secondary" : "ghost"}
+                    className="w-full justify-start rounded-xl px-3 h-10 hover-elevate group"
                     onClick={() => setSelectedCategory(cat.value)}
-                    className="whitespace-nowrap"
-                    data-testid={`button-mobile-category-${cat.value}`}
                   >
+                    <Package className={`h-4 w-4 mr-3 transition-colors ${selectedCategory === cat.value ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
                     {cat.label}
                   </Button>
                 ))}
               </div>
-              
-              <Button variant="outline" size="sm" className="gap-2 hidden md:flex" data-testid="button-filters">
-                <SlidersHorizontal className="h-4 w-4" />
-                Filters
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2 hidden md:flex" data-testid="button-price-range">
-                    Price Range
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setPriceRange("all")}>All Prices</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPriceRange("0-100")}>Under 100 Robux</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPriceRange("100-500")}>100 - 500 Robux</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPriceRange("500-1000")}>500 - 1000 Robux</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPriceRange("1000+")}>1000+ Robux</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                {filteredListings.length} items
-              </span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 rounded-md border bg-background text-sm focus:ring-2 focus:ring-primary"
-                data-testid="select-sort"
-              >
-                <option value="trending">Trending</option>
-                <option value="newest">Newest</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-              </select>
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground px-2">Sort By</h3>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full rounded-xl bg-card border-border/50 h-10">
+                  <SelectValue placeholder="Sort items..." />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border/50">
+                  <SelectItem value="trending">Trending</SelectItem>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="price-low">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Listings Grid */}
-      <section className="container mx-auto px-4 py-8">
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <Card key={i} className="overflow-hidden">
-                <div className="aspect-square bg-muted animate-pulse" />
-                <CardContent className="p-4 space-y-3">
-                  <div className="h-4 bg-muted rounded animate-pulse" />
-                  <div className="h-6 bg-muted rounded animate-pulse w-2/3" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : filteredListings.length === 0 ? (
-          <div className="text-center py-20">
-            <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No items found</h3>
-            <p className="text-muted-foreground mb-6">
-              {searchQuery ? "Try adjusting your search" : "Be the first to list an item!"}
-            </p>
             {user && (
-              <Button onClick={() => setLocation("/marketplace/create")} data-testid="button-create-first">
+              <Button 
+                className="w-full h-12 rounded-xl shadow-lg shadow-primary/20 group overflow-hidden"
+                onClick={() => setLocation("/marketplace/create")}
+              >
                 <Sparkles className="h-4 w-4 mr-2" />
-                Create Listing
+                List Your Asset
+                <ArrowRight className="h-4 w-4 ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
               </Button>
             )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredListings.map((listing) => {
-              const isOwner = user && listing.sellerId === user.id;
-              const sellerInfo = (listing as any).seller;
-              
-              return (
-                <Card
-                  key={listing.id}
-                  className="group overflow-hidden hover-elevate cursor-pointer transition-all border-2 hover:border-primary/50 relative"
-                  data-testid={`card-listing-${listing.id}`}
-                >
-                  {/* Actions Menu */}
-                  <div className="absolute top-2 right-2 z-10">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button 
-                          variant="secondary" 
-                          size="icon" 
-                          className="h-8 w-8 bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => e.stopPropagation()}
-                          data-testid={`button-listing-menu-${listing.id}`}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {isOwner ? (
-                          <>
-                            <DropdownMenuItem 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setLocation(`/marketplace/edit/${listing.id}`);
-                              }}
-                              data-testid={`menu-edit-${listing.id}`}
-                            >
-                              <Settings className="mr-2 h-4 w-4" />
-                              Edit Listing
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (confirm("Are you sure you want to delete this listing?")) {
-                                  deleteMutation.mutate(listing.id);
-                                }
-                              }}
-                              className="text-destructive focus:text-destructive"
-                              data-testid={`menu-delete-${listing.id}`}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete Listing
-                            </DropdownMenuItem>
-                          </>
-                        ) : (
-                          <>
-                            <DropdownMenuItem 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleReport('listing', listing.id, listing.title);
-                              }}
-                              data-testid={`menu-report-${listing.id}`}
-                            >
-                              <Flag className="mr-2 h-4 w-4" />
-                              Report Listing
-                            </DropdownMenuItem>
-                            {sellerInfo && (
-                              <DropdownMenuItem 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleReport('seller', listing.sellerId, sellerInfo.username || 'Seller');
-                                }}
-                                data-testid={`menu-report-seller-${listing.id}`}
-                              >
-                                <Flag className="mr-2 h-4 w-4" />
-                                Report Seller
-                              </DropdownMenuItem>
-                            )}
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+          </aside>
 
-                  {/* Clickable area */}
-                  <div onClick={() => setLocation(`/marketplace/listing/${listing.id}`)}>
-                    {/* Image */}
-                    <div className="aspect-square relative overflow-hidden bg-gradient-to-br from-primary/10 via-accent/10 to-primary/10">
-                      {listing.images && listing.images.length > 0 ? (
+          {/* Grid */}
+          <div className="flex-1">
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i} className="rounded-2xl border-border/50 bg-card/50 overflow-hidden">
+                    <div className="aspect-[4/3] bg-muted animate-pulse" />
+                    <div className="p-5 space-y-4">
+                      <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+                      <div className="h-4 bg-muted rounded w-1/2 animate-pulse" />
+                      <div className="flex justify-between items-center pt-4">
+                        <div className="h-6 bg-muted rounded w-20 animate-pulse" />
+                        <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredListings.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center bg-card/30 rounded-3xl border border-dashed border-border/50">
+                <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-6">
+                  <Search className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">No assets found</h3>
+                <p className="text-muted-foreground">Try adjusting your filters or search query.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredListings.map((listing) => (
+                  <Card
+                    key={listing.id}
+                    className="group relative rounded-2xl border-border/50 bg-card/50 overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 cursor-pointer"
+                    onClick={() => setLocation(`/marketplace/listing/${listing.id}`)}
+                  >
+                    <div className="aspect-[4/3] relative overflow-hidden bg-muted/30">
+                      {listing.images?.[0] ? (
                         <img
                           src={listing.images[0]}
                           alt={listing.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <Grid3X3 className="h-20 w-20 text-muted-foreground/30" />
+                        <div className="flex items-center justify-center h-full text-muted-foreground/20">
+                          <Package className="h-16 w-16" />
                         </div>
                       )}
                       
-                      {/* Trending Badge */}
-                      {listing.viewCount > 100 && (
-                        <Badge className="absolute top-3 left-3 gap-1 bg-primary/90 backdrop-blur-sm">
-                          <TrendingUp className="h-3 w-3" />
-                          Trending
+                      <div className="absolute top-4 right-4 flex flex-col gap-2">
+                        <Badge className="bg-background/80 backdrop-blur-md text-foreground border-border/50 hover:bg-background/90 rounded-lg">
+                          {listing.category}
                         </Badge>
-                      )}
-                      
-                      {/* Owner Badge */}
-                      {isOwner && (
-                        <Badge variant="secondary" className="absolute bottom-3 left-3 backdrop-blur-sm">
-                          Your Listing
-                        </Badge>
-                      )}
+                        {listing.viewCount > 50 && (
+                          <Badge className="bg-primary/90 text-white border-none rounded-lg shadow-lg">
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            Popular
+                          </Badge>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Content */}
-                    <CardContent className="p-4 space-y-3">
-                      <div>
-                        <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
-                          {listing.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                          {listing.description}
-                        </p>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <div>
+                          <h3 className="font-bold text-lg line-clamp-1 group-hover:text-primary transition-colors">
+                            {listing.title}
+                          </h3>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                            <CheckCircle2 className="h-3 w-3 text-primary" />
+                            <span>Verified Asset</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-black text-primary">
+                            {listing.price.toLocaleString()}
+                          </div>
+                          <div className="text-[10px] uppercase tracking-tighter text-muted-foreground font-bold">
+                            {listing.currency}
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Price */}
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-primary">
-                          {listing.price.toLocaleString()}
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {listing.currency}
-                        </Badge>
-                      </div>
-
-                      {/* Tags */}
-                      {listing.tags && listing.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {listing.tags.slice(0, 3).map((tag, i) => (
-                            <Badge key={i} variant="secondary" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
+                      <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-7 w-7 border border-border/50">
+                            {(listing as any).seller?.avatar ? (
+                              <AvatarImage 
+                                src={`https://cdn.discordapp.com/avatars/${(listing as any).seller.discordId}/${(listing as any).seller.avatar}.png`} 
+                              />
+                            ) : null}
+                            <AvatarFallback className="text-[10px] font-bold">
+                              {(listing as any).seller?.username?.[0]?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-semibold">{(listing as any).seller?.username}</span>
+                            <span className="text-[10px] text-muted-foreground">Pro Seller</span>
+                          </div>
                         </div>
-                      )}
-
-                      {/* Seller Info - Clickable */}
-                      <div 
-                        className="flex items-center gap-2 pt-2 border-t cursor-pointer hover:bg-muted/50 -mx-4 px-4 py-2 -mb-4 rounded-b-lg transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setLocation(`/marketplace/seller/${listing.sellerId}`);
-                        }}
-                        data-testid={`link-seller-${listing.id}`}
-                      >
-                        <Avatar className="h-7 w-7 border">
-                          {sellerInfo?.avatar ? (
-                            <AvatarImage 
-                              src={`https://cdn.discordapp.com/avatars/${sellerInfo.discordId}/${sellerInfo.avatar}.png`} 
-                            />
-                          ) : null}
-                          <AvatarFallback className="text-xs bg-primary/10">
-                            {sellerInfo?.username?.[0]?.toUpperCase() || 'S'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm font-medium truncate block">
-                            {sellerInfo?.username || 'Unknown Seller'}
-                          </span>
-                        </div>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground -rotate-90" />
+                        <Button size="sm" variant="secondary" className="rounded-lg h-8 px-4 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                          Details
+                        </Button>
                       </div>
                     </CardContent>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Report Dialog */}
-      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Report {reportTarget?.type === 'listing' ? 'Listing' : 'Seller'}</DialogTitle>
-            <DialogDescription>
-              Reporting: {reportTarget?.name}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Textarea
-              placeholder="Please describe why you're reporting this content..."
-              value={reportReason}
-              onChange={(e) => setReportReason(e.target.value)}
-              rows={4}
-              data-testid="input-report-reason"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReportDialogOpen(false)} data-testid="button-cancel-report">
-              Cancel
-            </Button>
-            <Button 
-              onClick={submitReport} 
-              disabled={!reportReason.trim() || reportMutation.isPending}
-              data-testid="button-submit-report"
-            >
-              {reportMutation.isPending ? "Submitting..." : "Submit Report"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* AI Chat Dialog */}
-      <Dialog open={aiChatOpen} onOpenChange={setAiChatOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-primary" />
-              AI Marketplace Assistant
-            </DialogTitle>
-            <DialogDescription>
-              Ask me anything about buying, selling, or navigating the marketplace!
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* Chat Messages */}
-            <div className="h-64 overflow-y-auto space-y-3 p-3 bg-muted/50 rounded-lg">
-              {aiConversation.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <Bot className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Start a conversation with the AI assistant!</p>
-                </div>
-              ) : (
-                aiConversation.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] rounded-lg px-3 py-2 ${
-                      msg.role === 'user' 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-background border'
-                    }`}>
-                      {msg.content}
-                    </div>
-                  </div>
-                ))
-              )}
-              {aiLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-background border rounded-lg px-3 py-2">
-                    <span className="animate-pulse">Thinking...</span>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Input */}
-            <div className="flex gap-2">
-              <Input
-                placeholder="Ask a question..."
-                value={aiMessage}
-                onChange={(e) => setAiMessage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAiChat()}
-                data-testid="input-ai-message"
-              />
-              <Button onClick={handleAiChat} disabled={aiLoading || !aiMessage.trim()} data-testid="button-send-ai">
-                Send
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Footer */}
-      <footer className="border-t bg-card/50 mt-20">
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Store className="h-6 w-6 text-primary" />
-                <span className="font-bold text-lg">RoMarket</span>
+                  </Card>
+                ))}
               </div>
-              <p className="text-sm text-muted-foreground">
-                The most trusted marketplace for Roblox creators and gamers worldwide.
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Modern Footer */}
+      <footer className="border-t border-border/50 bg-card/30 mt-20">
+        <div className="container mx-auto px-4 py-16">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 justify-center md:justify-start">
+                <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
+                  <Store className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-2xl font-bold tracking-tight">RoMarket</span>
+              </div>
+              <p className="max-w-xs text-muted-foreground text-sm">
+                Redefining the Roblox marketplace experience with trust, speed, and quality.
               </p>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Marketplace</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/marketplace" className="hover:text-foreground transition-colors">Browse Items</a></li>
-                <li><a href="/marketplace/create" className="hover:text-foreground transition-colors">Sell Items</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Top Sellers</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Safety & Security</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Contact Us</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a></li>
-                <li><a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
-              </ul>
+            
+            <div className="flex gap-12">
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-primary">Platform</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li><Link href="/marketplace" className="hover:text-primary transition-colors">Marketplace</Link></li>
+                  <li><Link href="/dashboard" className="hover:text-primary transition-colors">Dashboard</Link></li>
+                  <li><Link href="/pricing" className="hover:text-primary transition-colors">Pricing</Link></li>
+                </ul>
+              </div>
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-primary">Safety</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li><Link href="/terms" className="hover:text-primary transition-colors">Terms</Link></li>
+                  <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link></li>
+                  <li><Link href="/help" className="hover:text-primary transition-colors">Escrow Policy</Link></li>
+                </ul>
+              </div>
             </div>
           </div>
-          <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-            © 2025 RoMarket. Secure escrow-protected transactions.
+          <div className="mt-16 pt-8 border-t border-border/50 text-center text-xs text-muted-foreground">
+            © 2026 RoModerate Ecosystem. All rights reserved.
           </div>
         </div>
       </footer>
     </div>
   );
 }
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
